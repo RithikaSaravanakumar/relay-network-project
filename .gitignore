@@ -1,5 +1,5 @@
-# Ignore the backend repo (managed separately)
-demo/
+# Backup folder for previous demo git
+demo_git_backup/
 
 # Java / Maven
 target/
