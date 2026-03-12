@@ -1,0 +1,21 @@
+# Ignore the backend repo (managed separately)
+demo/
+
+# Java / Maven
+target/
+*.class
+
+# Node
+node_modules/
+relay-frontend/node_modules/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store
+
+# Logs
+*.log
