@@ -7,8 +7,12 @@ export default function NetworkNodes() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetchNodes();
-  }, []);
+  fetchNodes();
+
+  const interval = setInterval(fetchNodes, 3000);
+
+  return () => clearInterval(interval);
+}, []);
 
   const fetchNodes = async () => {
     setLoading(true);

@@ -1,24 +1,81 @@
+
 package com.example.demo.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Document(collection = "nodes")
 public class Node {
 
     @Id
-    private String id;
     private String nodeId;
+
     private String publicKey;
-    private Integer trustScore;
-    private Boolean malicious;
-    private Long createdAt;
+
+    private int trustScore;
+
+    private boolean malicious;
+
+    private double reputationScore;
+
+    private long createdAt;
+
+    public Node(){}
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
+    }
+
+    public String getId() {
+        return nodeId;
+    }
+
+    public void setId(String id) {
+        this.nodeId = id;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
+    }
+
+    public int getTrustScore() {
+        return trustScore;
+    }
+
+    public void setTrustScore(int trustScore) {
+        this.trustScore = trustScore;
+    }
+
+    public boolean getMalicious() {
+        return malicious;
+    }
+
+    public void setMalicious(boolean malicious) {
+        this.malicious = malicious;
+    }
+
+    public double getReputationScore() {
+        return reputationScore;
+    }
+
+    public void setReputationScore(double reputationScore) {
+        this.reputationScore = reputationScore;
+    }
+
+    public long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(long createdAt) {
+        this.createdAt = createdAt;
+    }
+
 }

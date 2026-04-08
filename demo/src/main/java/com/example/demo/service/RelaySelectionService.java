@@ -1,9 +1,107 @@
+
+// // package com.example.demo.service;
+
+// // import java.util.Comparator;
+// // import java.util.List;
+
+// // import org.springframework.stereotype.Service;
+
+// // import com.example.demo.model.RelayNode;
+// // import com.example.demo.repository.RelayNodeRepository;
+
+// // @Service
+// // public class RelaySelectionService {
+
+// //     private final RelayNodeRepository relayRepository;
+
+// //     public RelaySelectionService(RelayNodeRepository relayRepository) {
+// //         this.relayRepository = relayRepository;
+// //     }
+
+// //     public RelayNode selectBestRelay() {
+
+// //         List<RelayNode> relays = relayRepository.findAll();
+
+// //         return relays.stream()
+// //                 .filter(r -> r.getStatus().equals("ACTIVE"))
+// //                 .max(Comparator.comparingDouble(this::calculateScore))
+// //                 .orElse(null);
+// //     }
+
+// //     private double calculateScore(RelayNode relay) {
+
+// //         double pdrScore = relay.getPacketDeliveryRatio() * 50;
+
+// //         double latencyScore = 50 - relay.getLatency();
+
+// //         double failurePenalty = relay.getFailureRate() * 20;
+
+// //         return pdrScore + latencyScore - failurePenalty;
+// //     }
+// // }
+// package com.example.demo.service;
+
+// import java.util.Comparator;
+// import java.util.List;
+
+// import org.springframework.stereotype.Service;
+
+// import com.example.demo.model.RelayNode;
+// import com.example.demo.repository.RelayNodeRepository;
+
+// @Service
+// public class RelaySelectionService {
+
+//     private final RelayNodeRepository relayRepository;
+
+//     public RelaySelectionService(RelayNodeRepository relayRepository) {
+//         this.relayRepository = relayRepository;
+//     }
+
+//     // =========================================================
+//     // 🔥 SELECT BEST RELAY BASED ON TRUST SCORE
+//     // =========================================================
+//     public RelayNode selectBestRelay() {
+
+//         List<RelayNode> relays = relayRepository.findAll();
+
+//         return relays.stream()
+//                 .filter(r -> "ACTIVE".equals(r.getStatus()))
+//                 .max(Comparator.comparingDouble(this::calculateScore))
+//                 .orElse(null);
+//     }
+
+//     // =========================================================
+//     // 🔥 TRUST SCORE CALCULATION (FIXED VERSION)
+//     // =========================================================
+//     private double calculateScore(RelayNode relay) {
+
+//         if (relay.getLatency() == null || relay.getLatency() == 0) {
+//             return 0;
+//         }
+
+//         double pdr = relay.getPacketDeliveryRatio() != null
+//                 ? relay.getPacketDeliveryRatio()
+//                 : 0;
+
+//         double latency = relay.getLatency();
+//         double failureRate = relay.getFailureRate() != null
+//                 ? relay.getFailureRate()
+//                 : 0;
+
+//         // ✅ FIXED TRUST FORMULA (NORMALIZED)
+//         double trust =
+//                 (0.5 * pdr) +
+//                 (0.3 * (1.0 / (1 + latency))) +
+//                 (0.2 * (1 - failureRate));
+
+//         return trust;
+//     }
+// }
 package com.example.demo.service;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -13,75 +111,59 @@ import com.example.demo.repository.RelayNodeRepository;
 @Service
 public class RelaySelectionService {
 
-    private final RelayNodeRepository relayNodeRepository;
-    private final BlockchainService blockchainService;
+    private final RelayNodeRepository relayRepository;
 
-    public RelaySelectionService(RelayNodeRepository relayNodeRepository, BlockchainService blockchainService) {
-        this.relayNodeRepository = relayNodeRepository;
-        this.blockchainService = blockchainService;
+    public RelaySelectionService(RelayNodeRepository relayRepository) {
+        this.relayRepository = relayRepository;
     }
 
-    public Optional<RelayNode> selectTrustedRelay() {
-        List<RelayNode> relays = relayNodeRepository.findAll();
-        // filter out malicious
-        List<RelayNode> candidates = relays.stream()
-                .filter(r -> r.getStatus() == null || !"MALICIOUS".equalsIgnoreCase(r.getStatus()))
-                .collect(Collectors.toList());
+    // =========================================================
+    // 🔥 SELECT BEST RELAY BASED ON TRUST SCORE
+    // =========================================================
+    public RelayNode selectBestRelay() {
 
-        // fetch reputation for each and pick highest
-        RelayNode best = null;
-        double bestScore = -1.0;
-        for (RelayNode r : candidates) {
-            try {
-                double score = blockchainService.getReputationFromBlockchain(r.getNodeId());
-                if (score > bestScore) {
-                    bestScore = score;
-                    best = r;
-                }
-            } catch (Exception ex) {
-                // skip failed reads
-            }
+        List<RelayNode> relays = relayRepository.findAll();
+
+        if (relays == null || relays.isEmpty()) {
+            System.out.println("No relay nodes available");
+            return null;
         }
-        return Optional.ofNullable(best);
+
+        return relays.stream()
+                .filter(r -> r != null && "ACTIVE".equalsIgnoreCase(r.getStatus()))
+                .max(Comparator.comparingDouble(this::calculateScore))
+                .orElse(null);
     }
 
-}
-package com.example.demo.service;
+    // =========================================================
+    // 🔥 TRUST SCORE CALCULATION (FINAL FIXED VERSION)
+    // =========================================================
+    private double calculateScore(RelayNode relay) {
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
+        if (relay == null) return 0;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
+        double pdr = relay.getPacketDeliveryRatio() != null
+                ? relay.getPacketDeliveryRatio()
+                : 0.0;
 
-import com.example.demo.model.Node;
-import com.example.demo.repository.NodeRepository;
+        double latency = relay.getLatency() != null && relay.getLatency() > 0
+                ? relay.getLatency()
+                : 1.0;
 
-@Service
-public class RelaySelectionService {
+        double failureRate = relay.getFailureRate() != null
+                ? relay.getFailureRate()
+                : 0.0;
 
-    private final NodeRepository nodeRepository;
-    private static final Logger log = LoggerFactory.getLogger(RelaySelectionService.class);
+        // 🔥 FINAL NORMALIZED TRUST FORMULA
+        double trust =
+                (0.5 * pdr) +
+                (0.3 * (1.0 / (1 + latency))) +
+                (0.2 * (1 - failureRate));
 
-    public RelaySelectionService(NodeRepository nodeRepository) {
-        this.nodeRepository = nodeRepository;
+        // 🔥 SAFETY: keep trust in range [0,1]
+        if (trust < 0) trust = 0;
+        if (trust > 1) trust = 1;
+
+        return trust;
     }
-
-    /**
-     * Select the best relay node by filtering out malicious nodes and
-     * returning the node with the highest trustScore.
-     */
-    public Optional<Node> selectBestRelayNode() {
-        List<Node> candidates = nodeRepository.findAll().stream()
-                .filter(n -> n.getMalicious() != null && !n.getMalicious())
-                .collect(Collectors.toList());
-
-        return candidates.stream()
-                .filter(n -> n.getTrustScore() != null)
-                .max(Comparator.comparingInt(Node::getTrustScore));
-    }
-
 }

@@ -1,8 +1,380 @@
+
+// // // // package com.example.demo.service;
+
+// // // // import java.util.UUID;
+
+// // // // import org.springframework.stereotype.Service;
+
+// // // // import com.example.demo.model.Message;
+// // // // import com.example.demo.model.RelayNode;
+// // // // import com.example.demo.repository.MessageRepository;
+
+// // // // @Service
+// // // // public class MessageService {
+
+// // // //     private final MessageRepository messageRepository;
+// // // //     private final RelaySelectionService relaySelectionService;
+// // // //     private final ReputationService reputationService;
+
+// // // //     public MessageService(MessageRepository messageRepository,
+// // // //                           RelaySelectionService relaySelectionService,
+// // // //                           ReputationService reputationService) {
+
+// // // //         this.messageRepository = messageRepository;
+// // // //         this.relaySelectionService = relaySelectionService;
+// // // //         this.reputationService = reputationService;
+// // // //     }
+
+// // // //     public Message sendMessage(String sender,
+// // // //                                String receiver,
+// // // //                                String content) {
+
+// // // //         RelayNode relay = relaySelectionService.selectBestRelay();
+
+// // // //         Message message = new Message();
+
+// // // //         message.setMessageId(UUID.randomUUID().toString());
+
+// // // //         message.setSender(sender);
+// // // //         message.setReceiver(receiver);
+
+// // // //         message.setRelayNode(relay.getNodeId());
+
+// // // //         long latency = (long)(relay.getLatency() + (Math.random() * 50));
+
+// // // //         message.setLatencyMs(latency);
+// // // //         message.setDelivered(true);
+
+// // // //         message.setTimestamp(System.currentTimeMillis());
+
+// // // //         Message saved = messageRepository.save(message);
+
+// // // //         reputationService.calculateReputationScore(relay.getNodeId());
+
+// // // //         return saved;
+// // // //     }
+// // // // }
+// // // package com.example.demo.service;
+
+// // // import java.util.UUID;
+
+// // // import org.springframework.stereotype.Service;
+
+// // // import com.example.demo.model.Message;
+// // // import com.example.demo.model.RelayNode;
+// // // import com.example.demo.repository.MessageRepository;
+
+// // // @Service
+// // // public class MessageService {
+
+// // //     private final MessageRepository messageRepository;
+// // //     private final RelaySelectionService relaySelectionService;
+// // //     private final ReputationService reputationService;
+// // //     private final RelayNodeService relayNodeService;
+
+// // //     public MessageService(MessageRepository messageRepository,
+// // //                           RelaySelectionService relaySelectionService,
+// // //                           ReputationService reputationService,
+// // //                           RelayNodeService relayNodeService) {
+
+// // //         this.messageRepository = messageRepository;
+// // //         this.relaySelectionService = relaySelectionService;
+// // //         this.reputationService = reputationService;
+// // //         this.relayNodeService = relayNodeService;
+// // //     }
+
+// // //     public Message sendMessage(String sender,
+// // //                                String receiver,
+// // //                                String content) {
+
+// // //         // ✅ STEP 1: Auto create relays if not exist
+// // //         relayNodeService.getOrCreateRelay(sender);
+// // //         relayNodeService.getOrCreateRelay(receiver);
+
+// // //         // ✅ STEP 2: Select best relay
+// // //         RelayNode relay = relaySelectionService.selectBestRelay();
+
+// // //         if (relay == null) {
+// // //             throw new RuntimeException("No active relays available");
+// // //         }
+
+// // //         // ✅ STEP 3: Measure latency
+// // //         long start = System.currentTimeMillis();
+
+// // //         // ✅ STEP 4: Simulate success/failure (90% success)
+// // //         boolean success = Math.random() > 0.1;
+
+// // //         long latency = System.currentTimeMillis() - start + (long)(Math.random() * 50);
+
+// // //         // ✅ STEP 5: Update relay metrics
+// // //         int total = relay.getTotalRequests() == null ? 0 : relay.getTotalRequests();
+// // //         int successCount = relay.getSuccessCount() == null ? 0 : relay.getSuccessCount();
+// // //         int failureCount = relay.getFailureCount() == null ? 0 : relay.getFailureCount();
+
+// // //         total++;
+
+// // //         if (success) {
+// // //             successCount++;
+// // //         } else {
+// // //             failureCount++;
+// // //         }
+
+// // //         double pdr = (double) successCount / total;
+// // //         double failureRate = (double) failureCount / total;
+
+// // //         relay.setTotalRequests(total);
+// // //         relay.setSuccessCount(successCount);
+// // //         relay.setFailureCount(failureCount);
+
+// // //         relay.setPacketDeliveryRatio(pdr);
+// // //         relay.setFailureRate(failureRate);
+// // //         relay.setLatency((double) latency);
+
+// // //         // ✅ Auto deactivate bad relays
+// // //         if (failureRate > 0.5) {
+// // //             relay.setStatus("INACTIVE");
+// // //         }
+
+// // //         relayNodeService.save(relay);
+
+// // //         // ✅ STEP 6: Save message
+// // //         Message message = new Message();
+
+// // //         message.setMessageId(UUID.randomUUID().toString());
+// // //         message.setSender(sender);
+// // //         message.setReceiver(receiver);
+// // //         message.setRelayNode(relay.getNodeId());
+// // //         message.setLatencyMs(latency);
+// // //         message.setDelivered(success);
+// // //         message.setTimestamp(System.currentTimeMillis());
+
+// // //         Message saved = messageRepository.save(message);
+
+// // //         // ✅ STEP 7: Update reputation (Blockchain)
+// // //         reputationService.calculateReputationScore(relay.getNodeId());
+
+// // //         return saved;
+// // //     }
+// // // }
+// // package com.example.demo.service;
+
+// // import java.util.UUID;
+
+// // import org.springframework.stereotype.Service;
+
+// // import com.example.demo.model.Message;
+// // import com.example.demo.model.RelayNode;
+// // import com.example.demo.repository.MessageRepository;
+
+// // @Service
+// // public class MessageService {
+
+// //     private final MessageRepository messageRepository;
+// //     private final RelaySelectionService relaySelectionService;
+// //     private final ReputationService reputationService;
+// //     private final RelayNodeService relayNodeService;
+
+// //     public MessageService(MessageRepository messageRepository,
+// //                           RelaySelectionService relaySelectionService,
+// //                           ReputationService reputationService,
+// //                           RelayNodeService relayNodeService) {
+
+// //         this.messageRepository = messageRepository;
+// //         this.relaySelectionService = relaySelectionService;
+// //         this.reputationService = reputationService;
+// //         this.relayNodeService = relayNodeService;
+// //     }
+
+// //     public Message sendMessage(String sender,
+// //                                String receiver,
+// //                                String content) {
+
+// //         // ✅ AUTO CREATE RELAYS
+// //         relayNodeService.getOrCreateRelay(sender);
+// //         relayNodeService.getOrCreateRelay(receiver);
+
+// //         // ✅ SELECT BEST RELAY
+// //         RelayNode relay = relaySelectionService.selectBestRelay();
+
+// //         if (relay == null) {
+// //             throw new RuntimeException("No active relays available");
+// //         }
+
+// //         // ✅ LATENCY TRACK
+// //         long start = System.currentTimeMillis();
+
+// //         boolean success = Math.random() > 0.1;
+
+// //         long latency = System.currentTimeMillis() - start + (long)(Math.random() * 50);
+
+// //         // ✅ SAFE METRIC FETCH
+// //         int total = relay.getTotalRequests() == null ? 0 : relay.getTotalRequests();
+// //         int successCount = relay.getSuccessCount() == null ? 0 : relay.getSuccessCount();
+// //         int failureCount = relay.getFailureCount() == null ? 0 : relay.getFailureCount();
+
+// //         total++;
+
+// //         if (success) {
+// //             successCount++;
+// //         } else {
+// //             failureCount++;
+// //         }
+
+// //         double pdr = (double) successCount / total;
+// //         double failureRate = (double) failureCount / total;
+
+// //         // ✅ UPDATE METRICS
+// //         relay.setTotalRequests(total);
+// //         relay.setSuccessCount(successCount);
+// //         relay.setFailureCount(failureCount);
+
+// //         relay.setPacketDeliveryRatio(pdr);
+// //         relay.setFailureRate(failureRate);
+// //         relay.setLatency((double) latency);
+
+// //         if (failureRate > 0.5) {
+// //             relay.setStatus("INACTIVE");
+// //         }
+
+// //         relayNodeService.save(relay);
+
+// //         // ✅ SAVE MESSAGE
+// //         Message message = new Message();
+
+// //         message.setMessageId(UUID.randomUUID().toString());
+// //         message.setSender(sender);
+// //         message.setReceiver(receiver);
+// //         message.setRelayNode(relay.getNodeId());
+// //         message.setLatencyMs(latency);
+// //         message.setDelivered(success);
+// //         message.setTimestamp(System.currentTimeMillis());
+
+// //         Message saved = messageRepository.save(message);
+
+// //         // ✅ UPDATE REPUTATION (BLOCKCHAIN)
+// //         reputationService.calculateReputationScore(relay.getNodeId());
+
+// //         return saved;
+// //     }
+// // }
+// package com.example.demo.service;
+
+// import java.util.UUID;
+
+// import org.springframework.stereotype.Service;
+
+// import com.example.demo.model.Message;
+// import com.example.demo.model.RelayNode;
+// import com.example.demo.repository.MessageRepository;
+
+// @Service
+// public class MessageService {
+
+//     private final MessageRepository messageRepository;
+//     private final RelaySelectionService relaySelectionService;
+//     private final RelayNodeService relayNodeService;
+//     private final BlockchainService blockchainService;
+
+//     public MessageService(MessageRepository messageRepository,
+//                           RelaySelectionService relaySelectionService,
+//                           RelayNodeService relayNodeService,
+//                           BlockchainService blockchainService) {
+
+//         this.messageRepository = messageRepository;
+//         this.relaySelectionService = relaySelectionService;
+//         this.relayNodeService = relayNodeService;
+//         this.blockchainService = blockchainService;
+//     }
+
+//     public Message sendMessage(String sender,
+//                                String receiver,
+//                                String content) {
+
+//         // ✅ AUTO CREATE RELAYS
+//         relayNodeService.getOrCreateRelay(sender);
+//         relayNodeService.getOrCreateRelay(receiver);
+
+//         // ✅ SELECT BEST RELAY
+//         RelayNode relay = relaySelectionService.selectBestRelay();
+
+//         if (relay == null) {
+//             throw new RuntimeException("No active relays available");
+//         }
+
+//         // ✅ LATENCY TRACK
+//         long start = System.currentTimeMillis();
+
+//         boolean success = Math.random() > 0.1;
+
+//         long latency = System.currentTimeMillis() - start + (long)(Math.random() * 50);
+
+//         // ✅ METRICS
+//         int total = relay.getTotalRequests() == null ? 0 : relay.getTotalRequests();
+//         int successCount = relay.getSuccessCount() == null ? 0 : relay.getSuccessCount();
+//         int failureCount = relay.getFailureCount() == null ? 0 : relay.getFailureCount();
+
+//         total++;
+
+//         if (success) successCount++;
+//         else failureCount++;
+
+//         double pdr = (double) successCount / total;
+//         double failureRate = (double) failureCount / total;
+
+//         relay.setTotalRequests(total);
+//         relay.setSuccessCount(successCount);
+//         relay.setFailureCount(failureCount);
+
+//         relay.setPacketDeliveryRatio(pdr);
+//         relay.setFailureRate(failureRate);
+//         relay.setLatency((double) latency);
+
+//         if (failureRate > 0.5) {
+//             relay.setStatus("INACTIVE");
+//         }
+
+//         relayNodeService.save(relay);
+
+//         // ✅ TRUST CALCULATION (SAME AS SELECTION LOGIC)
+//         double trust =
+//                 (0.5 * pdr) +
+//                 (0.3 * (1.0 / (1 + latency))) +
+//                 (0.2 * (1 - failureRate));
+
+//         // 🔥 STORE IN BLOCKCHAIN USING RELAY ID
+//         try {
+//         blockchainService.updateReputation(relay.getRelayId(), trust);
+//         } catch (Exception e) {
+//         System.out.println("Blockchain error: " + e.getMessage());
+// }
+
+//         // 🔥 FETCH BACK FROM BLOCKCHAIN
+//         double blockchainTrust = 0;
+
+//         try {
+//         blockchainTrust = blockchainService.getReputation(relay.getRelayId());
+//         } catch (Exception e) {
+//         System.out.println("Blockchain read error: " + e.getMessage());
+//         }
+        
+//         // ✅ SAVE MESSAGE
+//         Message message = new Message();
+
+//         message.setMessageId(UUID.randomUUID().toString());
+//         message.setSender(sender);
+//         message.setReceiver(receiver);
+//         message.setRelayNode(relay.getRelayId()); // ✅ IMPORTANT
+//         message.setLatencyMs(latency);
+//         message.setDelivered(success);
+//         message.setTimestamp(System.currentTimeMillis());
+
+//         Message saved = messageRepository.save(message);
+
+//         return saved;
+//     }
+// }
 package com.example.demo.service;
 
-import java.time.Instant;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -16,141 +388,110 @@ public class MessageService {
 
     private final MessageRepository messageRepository;
     private final RelaySelectionService relaySelectionService;
-
-    public MessageService(MessageRepository messageRepository, RelaySelectionService relaySelectionService) {
-        this.messageRepository = messageRepository;
-        this.relaySelectionService = relaySelectionService;
-    }
-
-    public Message sendMessage(Message message) {
-        message.setMessageId(UUID.randomUUID().toString());
-        message.setTimestamp(Instant.now().toEpochMilli());
-        // choose relay if not provided
-        if (message.getRelayNode() == null || message.getRelayNode().isEmpty()) {
-            RelayNode selected = relaySelectionService.selectTrustedRelay().orElse(null);
-            if (selected != null) message.setRelayNode(selected.getRelayId());
-        }
-
-        // simulate delivery
-        message.setDelivered(true);
-        message.setLatencyMs(50L);
-
-        return messageRepository.save(message);
-    }
-
-    public List<Message> historyForNode(String nodeId) {
-        if (nodeId == null) return messageRepository.findAll();
-        List<Message> sent = messageRepository.findBySourceNode(nodeId);
-        if (sent == null) return Collections.emptyList();
-        return sent;
-    }
-
-}
-package com.example.demo.service;
-
-import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.ThreadLocalRandom;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
-import com.example.demo.model.Message;
-import com.example.demo.model.Node;
-import com.example.demo.repository.MessageRepository;
-import com.example.demo.repository.NodeRepository;
-
-@Service
-public class MessageService {
-
-    private static final Logger log = LoggerFactory.getLogger(MessageService.class);
-
-    private final MessageRepository messageRepository;
-    private final NodeRepository nodeRepository;
-    private final RelaySelectionService relaySelectionService;
-    private final ReputationService reputationService;
+    private final RelayNodeService relayNodeService;
+    private final BlockchainService blockchainService;
 
     public MessageService(MessageRepository messageRepository,
-                          NodeRepository nodeRepository,
                           RelaySelectionService relaySelectionService,
-                          ReputationService reputationService) {
+                          RelayNodeService relayNodeService,
+                          BlockchainService blockchainService) {
+
         this.messageRepository = messageRepository;
-        this.nodeRepository = nodeRepository;
         this.relaySelectionService = relaySelectionService;
-        this.reputationService = reputationService;
+        this.relayNodeService = relayNodeService;
+        this.blockchainService = blockchainService;
     }
 
-    /**
-     * Simulate sending a message from source to destination. If direct send fails,
-     * try using a relay node selected by RelaySelectionService.
-     */
-    public Message sendMessage(String sourceNodeId, String destinationNodeId, String content) throws Exception {
-        // Validate nodes exist
-        if (!nodeRepository.existsByNodeId(sourceNodeId)) {
-            throw new Exception("Source node not found: " + sourceNodeId);
+    public Message sendMessage(String sender, String receiver, String content) {
+
+        System.out.println("Sending message from " + sender + " to " + receiver);
+
+        // ✅ Auto create relays
+        relayNodeService.getOrCreateRelay(sender);
+        relayNodeService.getOrCreateRelay(receiver);
+
+        // ✅ Select best relay
+        RelayNode relay = relaySelectionService.selectBestRelay();
+
+        if (relay == null) {
+            throw new RuntimeException("No active relays available");
         }
-        if (!nodeRepository.existsByNodeId(destinationNodeId)) {
-            throw new Exception("Destination node not found: " + destinationNodeId);
+
+        // ✅ Simulate latency + success
+        long start = System.currentTimeMillis();
+        boolean success = Math.random() > 0.1;
+        long latency = System.currentTimeMillis() - start + (long)(Math.random() * 50);
+
+        // ✅ Metrics
+        int total = relay.getTotalRequests() == null ? 0 : relay.getTotalRequests();
+        int successCount = relay.getSuccessCount() == null ? 0 : relay.getSuccessCount();
+        int failureCount = relay.getFailureCount() == null ? 0 : relay.getFailureCount();
+
+        total++;
+
+        if (success) successCount++;
+        else failureCount++;
+
+        double pdr = (double) successCount / total;
+        double failureRate = (double) failureCount / total;
+
+        relay.setTotalRequests(total);
+        relay.setSuccessCount(successCount);
+        relay.setFailureCount(failureCount);
+
+        relay.setPacketDeliveryRatio(pdr);
+        relay.setFailureRate(failureRate);
+        relay.setLatency((double) latency);
+
+        if (failureRate > 0.5) {
+            relay.setStatus("INACTIVE");
         }
 
-        // Simulate direct connection success probability (70%)
-        boolean directSuccess = ThreadLocalRandom.current().nextInt(100) < 70;
-        long baseLatency = ThreadLocalRandom.current().nextLong(30, 200); // ms
+        relayNodeService.save(relay);
 
-        Message message = Message.builder()
-                .messageId(UUID.randomUUID().toString())
-                .sourceNode(sourceNodeId)
-                .destinationNode(destinationNodeId)
-                .content(content)
-                .timestamp(System.currentTimeMillis())
-                .delivered(false)
-                .latencyMs(baseLatency)
-                .build();
+        // ✅ Trust calculation (FIXED)
+        double trust =
+                (0.5 * pdr) +
+                (0.3 * (1.0 / (1 + latency))) +
+                (0.2 * (1 - failureRate));
 
-        if (directSuccess) {
-            message.setDelivered(true);
-            message.setRelayNode(null);
-            log.info("Direct delivery succeeded from {} to {}", sourceNodeId, destinationNodeId);
+        System.out.println("Calculated trust: " + trust);
 
-        } else {
-            // Select best relay
-            Optional<Node> relayOpt = relaySelectionService.selectBestRelayNode();
-            if (relayOpt.isPresent()) {
-                Node relay = relayOpt.get();
-                // If the relay is the source or destination, treat as failure
-                if (relay.getNodeId().equals(sourceNodeId) || relay.getNodeId().equals(destinationNodeId)) {
-                    message.setDelivered(false);
-                    message.setRelayNode(null);
-                    log.warn("No suitable relay found for {} -> {}", sourceNodeId, destinationNodeId);
-                } else {
-                    // Relay will forward, add extra latency
-                    long extra = ThreadLocalRandom.current().nextLong(20, 150);
-                    message.setLatencyMs(message.getLatencyMs() + extra);
-                    message.setRelayNode(relay.getNodeId());
-                    message.setDelivered(true);
-                    log.info("Delivered via relay {} for {} -> {}", relay.getNodeId(), sourceNodeId, destinationNodeId);
-                }
-            } else {
-                message.setDelivered(false);
-                message.setRelayNode(null);
-                log.warn("No relay available for message {} -> {}", sourceNodeId, destinationNodeId);
+        // 🔥 Safe blockchain write
+        try {
+            blockchainService.updateReputation(relay.getRelayId(), trust);
+        } catch (Exception e) {
+            System.out.println("Blockchain write failed: " + e.getMessage());
+        }
+
+        // 🔥 Safe blockchain read
+        double blockchainTrust = trust;
+
+        try {
+            double value = blockchainService.getReputation(relay.getRelayId());
+            if (value > 0) {
+                blockchainTrust = value;
             }
+        } catch (Exception e) {
+            System.out.println("Blockchain read failed: " + e.getMessage());
         }
+
+        // ✅ Save message
+        Message message = new Message();
+
+        message.setMessageId(UUID.randomUUID().toString());
+        message.setSender(sender);
+        message.setReceiver(receiver);
+        message.setContent(content);
+        message.setRelayNode(relay.getRelayId());
+        message.setLatencyMs(latency);
+        message.setDelivered(success);
+        message.setTimestamp(System.currentTimeMillis());
 
         Message saved = messageRepository.save(message);
 
-        // Update reputation for source and any relay involved
-        try {
-            reputationService.updateTrustScore(sourceNodeId);
-            if (saved.getRelayNode() != null) {
-                reputationService.updateTrustScore(saved.getRelayNode());
-            }
-        } catch (Exception e) {
-            log.error("Error updating reputation after message send: {}", e.getMessage(), e);
-        }
+        System.out.println("Message sent via relay: " + relay.getRelayId());
 
         return saved;
     }
-
 }

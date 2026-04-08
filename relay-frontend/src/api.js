@@ -22,8 +22,14 @@ const getNetworkStatus = () => apiClient.get('/network/status');
 const registerRelay = (payload) => apiClient.post('/relay/register', payload);
 const updateRelayPerformance = (payload) => apiClient.post('/relay/performance', payload);
 
-const sendMessage = (payload) => apiClient.post('/message/send', payload);
-
+// const sendMessage = (payload) => apiClient.post('/message/send', payload);
+// const sendMessage = (payload) => apiClient.post('/message/send', payload);
+// const sendMessage = (payload) =>
+//   apiClient.post(`/messages/send?sourceNode=${payload.sourceNode}&destinationNode=${payload.destinationNode}&content=${payload.content}`);
+const sendMessage = ({ sourceNode, destinationNode, content }) =>
+  apiClient.post(
+    `/messages/send?sourceNode=${encodeURIComponent(sourceNode)}&destinationNode=${encodeURIComponent(destinationNode)}&content=${encodeURIComponent(content)}`
+  );
 const calculateReputation = (nodeId) => apiClient.get(`/reputation/calculate?nodeId=${encodeURIComponent(nodeId)}`);
 const getReputation = (nodeId) => apiClient.get(`/reputation/get?nodeId=${encodeURIComponent(nodeId)}`);
 

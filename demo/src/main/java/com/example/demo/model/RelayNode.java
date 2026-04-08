@@ -1,28 +1,198 @@
+// package com.example.demo.model;
+
+// import org.springframework.data.annotation.Id;
+// import org.springframework.data.mongodb.core.mapping.Document;
+
+// @Document(collection = "relay_nodes")
+// public class RelayNode {
+
+//     @Id
+//     private String id;
+
+//     private String relayId;
+//     private String nodeId;
+
+//     private Double latency;
+//     private Double packetDeliveryRatio;
+//     private Double failureRate;
+
+//     private String status;
+
+//     private Long createdAt;
+
+//     public RelayNode() {}
+
+//     public String getId() {
+//         return id;
+//     }
+
+//     public String getRelayId() {
+//         return relayId;
+//     }
+
+//     public void setRelayId(String relayId) {
+//         this.relayId = relayId;
+//     }
+
+//     public String getNodeId() {
+//         return nodeId;
+//     }
+
+//     public void setNodeId(String nodeId) {
+//         this.nodeId = nodeId;
+//     }
+
+//     public Double getLatency() {
+//         return latency;
+//     }
+
+//     public void setLatency(Double latency) {
+//         this.latency = latency;
+//     }
+
+//     public Double getPacketDeliveryRatio() {
+//         return packetDeliveryRatio;
+//     }
+
+//     public void setPacketDeliveryRatio(Double packetDeliveryRatio) {
+//         this.packetDeliveryRatio = packetDeliveryRatio;
+//     }
+
+//     public Double getFailureRate() {
+//         return failureRate;
+//     }
+
+//     public void setFailureRate(Double failureRate) {
+//         this.failureRate = failureRate;
+//     }
+
+//     public String getStatus() {
+//         return status;
+//     }
+
+//     public void setStatus(String status) {
+//         this.status = status;
+//     }
+
+//     public Long getCreatedAt() {
+//         return createdAt;
+//     }
+
+//     public void setCreatedAt(Long createdAt) {
+//         this.createdAt = createdAt;
+//     }
+// }
 package com.example.demo.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Document(collection = "relay_nodes")
 public class RelayNode {
 
     @Id
     private String id;
+
     private String relayId;
     private String nodeId;
+
     private Double latency;
     private Double packetDeliveryRatio;
     private Double failureRate;
-    private String status; // e.g., ACTIVE, MALICIOUS, INACTIVE
+
+    private String status;
     private Long createdAt;
 
+    // 🔥 NEW FIELDS (IMPORTANT)
+    private Integer totalRequests;
+    private Integer successCount;
+    private Integer failureCount;
+
+    // ===== GETTERS & SETTERS =====
+
+    public String getId() {
+        return id;
+    }
+
+    public String getRelayId() {
+        return relayId;
+    }
+
+    public void setRelayId(String relayId) {
+        this.relayId = relayId;
+    }
+
+    public String getNodeId() {
+        return nodeId;
+    }
+
+    public void setNodeId(String nodeId) {
+        this.nodeId = nodeId;
+    }
+
+    public Double getLatency() {
+        return latency;
+    }
+
+    public void setLatency(Double latency) {
+        this.latency = latency;
+    }
+
+    public Double getPacketDeliveryRatio() {
+        return packetDeliveryRatio;
+    }
+
+    public void setPacketDeliveryRatio(Double packetDeliveryRatio) {
+        this.packetDeliveryRatio = packetDeliveryRatio;
+    }
+
+    public Double getFailureRate() {
+        return failureRate;
+    }
+
+    public void setFailureRate(Double failureRate) {
+        this.failureRate = failureRate;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Long getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Long createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    // 🔥 NEW GETTERS & SETTERS
+
+    public Integer getTotalRequests() {
+        return totalRequests;
+    }
+
+    public void setTotalRequests(Integer totalRequests) {
+        this.totalRequests = totalRequests;
+    }
+
+    public Integer getSuccessCount() {
+        return successCount;
+    }
+
+    public void setSuccessCount(Integer successCount) {
+        this.successCount = successCount;
+    }
+
+    public Integer getFailureCount() {
+        return failureCount;
+    }
+
+    public void setFailureCount(Integer failureCount) {
+        this.failureCount = failureCount;
+    }
 }

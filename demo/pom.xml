@@ -49,7 +49,7 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
+			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>
@@ -65,12 +65,12 @@
 		<dependency>
 			<groupId>org.web3j</groupId>
 			<artifactId>core</artifactId>
-			<version>4.8.7</version>
+			<version>4.9.8</version>
 		</dependency>
 		<dependency>
 			<groupId>org.web3j</groupId>
 			<artifactId>crypto</artifactId>
-			<version>4.8.7</version>
+			<version>4.9.8</version>
 		</dependency>
 	</dependencies>
 
@@ -93,7 +93,7 @@
 						<path>
 							<groupId>org.projectlombok</groupId>
 							<artifactId>lombok</artifactId>
-							<version>${lombok.version}</version>
+							<version>1.18.32</version>
 						</path>
 					</annotationProcessorPaths>
 				</configuration>
