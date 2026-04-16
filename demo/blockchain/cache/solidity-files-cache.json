@@ -1,0 +1,40 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "C:\\Users\\rithi\\Downloads\\relay\\demo\\blockchain\\contracts\\ReputationLedger.sol": {
+      "lastModificationDate": 1776347547646,
+      "contentHash": "551f81e4a479addb0b8682c9613f40fe",
+      "sourceName": "contracts/ReputationLedger.sol",
+      "solcConfig": {
+        "version": "0.8.19",
+        "settings": {
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.19"
+      ],
+      "artifacts": [
+        "ReputationLedger"
+      ]
+    }
+  }
+}

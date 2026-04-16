@@ -1,107 +1,9 @@
-
-// // package com.example.demo.service;
-
-// // import java.util.Comparator;
-// // import java.util.List;
-
-// // import org.springframework.stereotype.Service;
-
-// // import com.example.demo.model.RelayNode;
-// // import com.example.demo.repository.RelayNodeRepository;
-
-// // @Service
-// // public class RelaySelectionService {
-
-// //     private final RelayNodeRepository relayRepository;
-
-// //     public RelaySelectionService(RelayNodeRepository relayRepository) {
-// //         this.relayRepository = relayRepository;
-// //     }
-
-// //     public RelayNode selectBestRelay() {
-
-// //         List<RelayNode> relays = relayRepository.findAll();
-
-// //         return relays.stream()
-// //                 .filter(r -> r.getStatus().equals("ACTIVE"))
-// //                 .max(Comparator.comparingDouble(this::calculateScore))
-// //                 .orElse(null);
-// //     }
-
-// //     private double calculateScore(RelayNode relay) {
-
-// //         double pdrScore = relay.getPacketDeliveryRatio() * 50;
-
-// //         double latencyScore = 50 - relay.getLatency();
-
-// //         double failurePenalty = relay.getFailureRate() * 20;
-
-// //         return pdrScore + latencyScore - failurePenalty;
-// //     }
-// // }
-// package com.example.demo.service;
-
-// import java.util.Comparator;
-// import java.util.List;
-
-// import org.springframework.stereotype.Service;
-
-// import com.example.demo.model.RelayNode;
-// import com.example.demo.repository.RelayNodeRepository;
-
-// @Service
-// public class RelaySelectionService {
-
-//     private final RelayNodeRepository relayRepository;
-
-//     public RelaySelectionService(RelayNodeRepository relayRepository) {
-//         this.relayRepository = relayRepository;
-//     }
-
-//     // =========================================================
-//     // 🔥 SELECT BEST RELAY BASED ON TRUST SCORE
-//     // =========================================================
-//     public RelayNode selectBestRelay() {
-
-//         List<RelayNode> relays = relayRepository.findAll();
-
-//         return relays.stream()
-//                 .filter(r -> "ACTIVE".equals(r.getStatus()))
-//                 .max(Comparator.comparingDouble(this::calculateScore))
-//                 .orElse(null);
-//     }
-
-//     // =========================================================
-//     // 🔥 TRUST SCORE CALCULATION (FIXED VERSION)
-//     // =========================================================
-//     private double calculateScore(RelayNode relay) {
-
-//         if (relay.getLatency() == null || relay.getLatency() == 0) {
-//             return 0;
-//         }
-
-//         double pdr = relay.getPacketDeliveryRatio() != null
-//                 ? relay.getPacketDeliveryRatio()
-//                 : 0;
-
-//         double latency = relay.getLatency();
-//         double failureRate = relay.getFailureRate() != null
-//                 ? relay.getFailureRate()
-//                 : 0;
-
-//         // ✅ FIXED TRUST FORMULA (NORMALIZED)
-//         double trust =
-//                 (0.5 * pdr) +
-//                 (0.3 * (1.0 / (1 + latency))) +
-//                 (0.2 * (1 - failureRate));
-
-//         return trust;
-//     }
-// }
 package com.example.demo.service;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -112,13 +14,14 @@ import com.example.demo.repository.RelayNodeRepository;
 public class RelaySelectionService {
 
     private final RelayNodeRepository relayRepository;
+    private final Random random = new Random();
 
     public RelaySelectionService(RelayNodeRepository relayRepository) {
         this.relayRepository = relayRepository;
     }
 
     // =========================================================
-    // 🔥 SELECT BEST RELAY BASED ON TRUST SCORE
+    // 🔥 SELECT BEST RELAY (EPSILON-GREEDY: EXPLORE + EXPLOIT)
     // =========================================================
     public RelayNode selectBestRelay() {
 
@@ -129,10 +32,32 @@ public class RelaySelectionService {
             return null;
         }
 
-        return relays.stream()
+        List<RelayNode> activeRelays = relays.stream()
                 .filter(r -> r != null && "ACTIVE".equalsIgnoreCase(r.getStatus()))
-                .max(Comparator.comparingDouble(this::calculateScore))
-                .orElse(null);
+                .collect(Collectors.toList());
+
+        if (activeRelays.isEmpty()) {
+            System.out.println("⚠️ No active relay nodes available");
+            return null;
+        }
+
+        RelayNode selected;
+
+        // 20% chance → random relay (exploration)
+        if (Math.random() < 0.2) {
+            selected = activeRelays.get(random.nextInt(activeRelays.size()));
+            System.out.println("🎲 Using RANDOM relay (exploration): " + selected.getRelayId());
+        } else {
+            // 80% → best relay with slight jitter to break ties naturally
+            selected = activeRelays.stream()
+                    .max(Comparator.comparingDouble(
+                            r -> calculateScore(r) + Math.random() * 0.05))
+                    .orElse(activeRelays.get(0));
+            System.out.println("🏆 Using BEST relay (exploitation): " + selected.getRelayId()
+                    + " | Score: " + String.format("%.4f", calculateScore(selected)));
+        }
+
+        return selected;
     }
 
     // =========================================================
