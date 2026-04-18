@@ -231,6 +231,9 @@ package com.example.demo.service;
 import java.util.List;
 import java.util.UUID;
 
+import java.security.MessageDigest;
+import java.nio.charset.StandardCharsets;
+
 import org.springframework.stereotype.Service;
 
 import com.example.demo.model.RelayNode;
@@ -240,17 +243,37 @@ import com.example.demo.repository.RelayNodeRepository;
 public class RelayNodeService {
 
     private final RelayNodeRepository relayRepository;
+    private final BlockchainService blockchainService;
 
-    public RelayNodeService(RelayNodeRepository relayRepository) {
+    public RelayNodeService(RelayNodeRepository relayRepository, BlockchainService blockchainService) {
         this.relayRepository = relayRepository;
+        this.blockchainService = blockchainService;
+    }
+
+    private String generateSha256(String input) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
+            StringBuilder hexString = new StringBuilder(2 * hash.length);
+            for (int i = 0; i < hash.length; i++) {
+                String hex = Integer.toHexString(0xff & hash[i]);
+                if(hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+            return hexString.toString().substring(0, 16); // 16 char ID for readability
+        } catch (Exception e) {
+            return UUID.randomUUID().toString().substring(0, 16);
+        }
     }
 
     // =========================================================
     // 🔥 AUTO CREATE RELAY (USED IN MESSAGE FLOW)
     // =========================================================
-    public RelayNode getOrCreateRelay(String nodeId) {
+    public RelayNode getOrCreateRelay(String nodeId, String userId) {
 
-        List<RelayNode> relays = relayRepository.findAll();
+        List<RelayNode> relays = relayRepository.findAllByUserId(userId);
 
         for (RelayNode r : relays) {
             if (nodeId.equals(r.getNodeId())) {
@@ -261,8 +284,11 @@ public class RelayNodeService {
         // Create new relay automatically
         RelayNode relay = new RelayNode();
 
-        relay.setRelayId("relay-" + UUID.randomUUID().toString().substring(0, 8));
+        String rawId = UUID.randomUUID().toString();
+        relay.setRelayId("relay-" + generateSha256(rawId));
         relay.setNodeId(nodeId);
+        relay.setPublicKey("PUB-" + UUID.randomUUID().toString().substring(0,12));
+        relay.setUserId(userId);
 
         // Default performance values
         relay.setLatency(50.0);
@@ -277,15 +303,23 @@ public class RelayNodeService {
         relay.setSuccessCount(0);
         relay.setFailureCount(0);
 
-        return relayRepository.save(relay);
+        RelayNode saved = relayRepository.save(relay);
+        blockchainService.registerNodeOnBlockchain(saved.getRelayId(), saved.getPublicKey());
+        return saved;
     }
 
     // =========================================================
     // 🔥 MANUAL CREATE RELAY (USED BY UI BUTTON)
     // =========================================================
-    public RelayNode registerRelay(RelayNode relay) {
+    public RelayNode registerRelay(RelayNode relay, String userId) {
 
-        relay.setRelayId("relay-" + UUID.randomUUID().toString().substring(0, 8));
+        String rawId = UUID.randomUUID().toString();
+        relay.setRelayId("relay-" + generateSha256(rawId));
+        relay.setUserId(userId);
+        
+        if (relay.getPublicKey() == null || relay.getPublicKey().isEmpty()) {
+            relay.setPublicKey("PUB-" + UUID.randomUUID().toString().substring(0,12));
+        }
 
         if (relay.getLatency() == null) {
             relay.setLatency(50.0);
@@ -310,7 +344,9 @@ public class RelayNodeService {
         relay.setSuccessCount(0);
         relay.setFailureCount(0);
 
-        return relayRepository.save(relay);
+        RelayNode saved = relayRepository.save(relay);
+        blockchainService.registerNodeOnBlockchain(saved.getRelayId(), saved.getPublicKey());
+        return saved;
     }
 
     // =========================================================
@@ -323,8 +359,8 @@ public class RelayNodeService {
     // =========================================================
     // 🔹 GET ALL RELAYS
     // =========================================================
-    public List<RelayNode> listRelays() {
-        return relayRepository.findAll();
+    public List<RelayNode> listRelays(String userId) {
+        return relayRepository.findAllByUserId(userId);
     }
 
     // =========================================================

@@ -76,6 +76,7 @@ import com.example.demo.model.RelayNode;
 import com.example.demo.repository.NodeRepository;
 import com.example.demo.repository.RelayNodeRepository;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -93,8 +94,8 @@ public class NetworkController {
 
     @GetMapping("/nodes")
     public ResponseEntity<?> listNodes() {
-
-        List<Node> nodes = nodeRepository.findAll();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<Node> nodes = nodeRepository.findAllByUserId(userId);
 
         Map<String,Object> resp = new HashMap<>();
         resp.put("success", true);
@@ -105,8 +106,8 @@ public class NetworkController {
 
     @GetMapping("/relays")
     public ResponseEntity<?> listRelays() {
-
-        List<RelayNode> relays = relayNodeRepository.findAll();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<RelayNode> relays = relayNodeRepository.findAllByUserId(userId);
 
         Map<String,Object> resp = new HashMap<>();
         resp.put("success", true);
@@ -117,8 +118,8 @@ public class NetworkController {
 
     @GetMapping("/status")
     public ResponseEntity<?> networkStatus() {
-
-        List<Node> nodes = nodeRepository.findAll();
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        List<Node> nodes = nodeRepository.findAllByUserId(userId);
 
         int total = nodes.size();
 

@@ -17,4 +17,6 @@ public interface MessageRepository extends MongoRepository<Message, String> {
 
     List<Message> findByRelayNode(String relayNode);
 
+    List<Message> findAllByUserId(String userId);
+
 }

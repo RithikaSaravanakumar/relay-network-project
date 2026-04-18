@@ -39,9 +39,9 @@ public class NodeService {
         this.blockchainService = blockchainService;
     }
 
-    public Node registerNode() throws Exception {
+    public Node registerNode(String userId) throws Exception {
 
-        log.info("Starting new node registration process...");
+        log.info("Starting new node registration process for user: {}...", userId);
 
         KeyPair keyPair = cryptoUtil.generateKeyPair();
 
@@ -59,6 +59,7 @@ public class NodeService {
         node.setPublicKey(encodedPublicKey);
         node.setTrustScore(DEFAULT_TRUST_SCORE);
         node.setMalicious(DEFAULT_MALICIOUS);
+        node.setUserId(userId);
         node.setCreatedAt(System.currentTimeMillis());
 
         Node savedNode = nodeRepository.save(node);
@@ -92,9 +93,10 @@ public class NodeService {
     }
 
     public boolean nodeExists(String nodeId){
-
         return nodeRepository.existsByNodeId(nodeId);
-
     }
 
+    public java.util.List<Node> getAllNodes(String userId) {
+        return nodeRepository.findAllByUserId(userId);
+    }
 }

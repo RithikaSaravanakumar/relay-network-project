@@ -31,6 +31,9 @@ public class BlockchainService {
     @Value("${blockchain.reputationLedger.address:0xf8e81D47203A594245E36C48e151709F0C19fBe8}")
     private String contractAddress;
 
+    @Value("${blockchain.nodeRegistry.address:0xDA0bab807633f07f013f94DD0E6A4F96F8742B53}")
+    private String nodeRegistryAddress;
+
     public BlockchainService(Web3j web3j, Credentials credentials) {
         this.web3j = web3j;
         this.credentials = credentials;
@@ -164,7 +167,41 @@ public class BlockchainService {
     }
 
     public void registerNodeOnBlockchain(String nodeId, String publicKey) {
-        System.out.println("Node registered on blockchain: " + nodeId);
+        try {
+            System.out.println("Registering node: " + nodeId + " with key: " + publicKey);
+            
+            long chainId = web3j.ethChainId().send().getChainId().longValue();
+            RawTransactionManager txManager = new RawTransactionManager(web3j, credentials, chainId);
+
+            Function function = new Function(
+                    "registerNode",
+                    Arrays.asList(
+                            new Utf8String(nodeId),
+                            new Utf8String(publicKey)
+                    ),
+                    Collections.emptyList()
+            );
+
+            String encoded = FunctionEncoder.encode(function);
+            BigInteger gasPrice = BigInteger.valueOf(20_000_000_000L); // 20 gwei
+            BigInteger gasLimit = BigInteger.valueOf(300000); 
+
+            EthSendTransaction response = txManager.sendTransaction(
+                    gasPrice,
+                    gasLimit,
+                    nodeRegistryAddress,
+                    encoded,
+                    BigInteger.ZERO
+            );
+
+            if (response != null && response.getTransactionHash() != null) {
+                System.out.println("✅ NODE REGISTERED TX HASH: " + response.getTransactionHash());
+            } else if (response != null && response.getError() != null) {
+                System.out.println("❌ TX ERROR: " + response.getError().getMessage());
+            }
+        } catch (Exception e) {
+            System.out.println("❌ Node Registration ERROR: " + e.getMessage());
+        }
     }
 
     public void storeReputation(String nodeId, double trust) {

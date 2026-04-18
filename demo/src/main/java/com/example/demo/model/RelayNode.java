@@ -95,6 +95,7 @@ public class RelayNode {
 
     private String relayId;
     private String nodeId;
+    private String publicKey;
 
     private Double latency;
     private Double packetDeliveryRatio;
@@ -107,8 +108,18 @@ public class RelayNode {
     private Integer totalRequests;
     private Integer successCount;
     private Integer failureCount;
+    private Double trust;
+    private String userId;
 
     // ===== GETTERS & SETTERS =====
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     public String getId() {
         return id;
@@ -128,6 +139,14 @@ public class RelayNode {
 
     public void setNodeId(String nodeId) {
         this.nodeId = nodeId;
+    }
+
+    public String getPublicKey() {
+        return publicKey;
+    }
+
+    public void setPublicKey(String publicKey) {
+        this.publicKey = publicKey;
     }
 
     public Double getLatency() {
@@ -194,5 +213,13 @@ public class RelayNode {
 
     public void setFailureCount(Integer failureCount) {
         this.failureCount = failureCount;
+    }
+
+    public Double getTrust() {
+        return trust == null ? 0.5 : trust;
+    }
+
+    public void setTrust(Double trust) {
+        this.trust = trust == null ? 0.5 : Math.max(0.0, Math.min(1.0, trust));
     }
 }

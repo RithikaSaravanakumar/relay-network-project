@@ -23,12 +23,12 @@ public class RelaySelectionService {
     // =========================================================
     // 🔥 SELECT BEST RELAY (EPSILON-GREEDY: EXPLORE + EXPLOIT)
     // =========================================================
-    public RelayNode selectBestRelay() {
+    public RelayNode selectBestRelay(String userId) {
 
-        List<RelayNode> relays = relayRepository.findAll();
+        List<RelayNode> relays = relayRepository.findAllByUserId(userId);
 
         if (relays == null || relays.isEmpty()) {
-            System.out.println("No relay nodes available");
+            System.out.println("No relay nodes available for user: " + userId);
             return null;
         }
 
@@ -37,14 +37,14 @@ public class RelaySelectionService {
                 .collect(Collectors.toList());
 
         if (activeRelays.isEmpty()) {
-            System.out.println("⚠️ No active relay nodes available");
+            System.out.println("⚠️ No active relay nodes available for user: " + userId);
             return null;
         }
 
         RelayNode selected;
 
-        // 20% chance → random relay (exploration)
-        if (Math.random() < 0.2) {
+        // 10% chance → random relay (exploration)
+        if (Math.random() < 0.1) {
             selected = activeRelays.get(random.nextInt(activeRelays.size()));
             System.out.println("🎲 Using RANDOM relay (exploration): " + selected.getRelayId());
         } else {
@@ -60,6 +60,28 @@ public class RelaySelectionService {
         return selected;
     }
 
+    public List<RelayNode> selectMultiHopPath(int maxHops, String userId) {
+        List<RelayNode> relays = relayRepository.findAllByUserId(userId);
+        
+        if (relays == null || relays.isEmpty()) {
+            return List.of();
+        }
+
+        List<RelayNode> activeRelays = relays.stream()
+                .filter(r -> r != null && !"BLOCKED".equalsIgnoreCase(r.getStatus()))
+                .sorted(Comparator.comparingDouble(r -> -calculateScore(r)))
+                .collect(Collectors.toList());
+
+        if (activeRelays.isEmpty()) {
+            return List.of();
+        }
+
+        int hops = Math.min(maxHops, activeRelays.size());
+        
+        // Return top N relays
+        return activeRelays.subList(0, hops);
+    }
+
     // =========================================================
     // 🔥 TRUST SCORE CALCULATION (FINAL FIXED VERSION)
     // =========================================================
@@ -73,22 +95,27 @@ public class RelaySelectionService {
 
         double latency = relay.getLatency() != null && relay.getLatency() > 0
                 ? relay.getLatency()
-                : 1.0;
+                : 100.0;
 
         double failureRate = relay.getFailureRate() != null
                 ? relay.getFailureRate()
                 : 0.0;
+                
+        // Fallback for trust (if not passed from blockchain) uses local PDR logic initially
+        double trust = (0.5 * pdr) + (0.5 * (1 - failureRate));
 
-        // 🔥 FINAL NORMALIZED TRUST FORMULA
-        double trust =
-                (0.5 * pdr) +
-                (0.3 * (1.0 / (1 + latency))) +
-                (0.2 * (1 - failureRate));
+        // 🔥 FINAL FORMULA STRICTLY AS REQUESTED
+        // Success Rate is mapped to packetDeliveryRatio (PDR)
+        // Latency is normalized (latency / 100) to keep it mostly [0,1]
+        double score =
+                (0.5 * trust) +
+                (0.3 * pdr) -
+                (0.2 * (latency / 100.0));
 
-        // 🔥 SAFETY: keep trust in range [0,1]
-        if (trust < 0) trust = 0;
-        if (trust > 1) trust = 1;
+        // 🔥 SAFETY: keep score in range [0,1]
+        if (score < 0) score = 0;
+        if (score > 1) score = 1;
 
-        return trust;
+        return score;
     }
 }

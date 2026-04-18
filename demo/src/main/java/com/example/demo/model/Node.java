@@ -17,10 +17,18 @@ public class Node {
     private boolean malicious;
 
     private double reputationScore;
-
+    private String userId;
     private long createdAt;
 
     public Node(){}
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     public String getNodeId() {
         return nodeId;

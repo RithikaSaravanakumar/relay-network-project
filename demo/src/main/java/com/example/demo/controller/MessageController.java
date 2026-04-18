@@ -29,8 +29,10 @@
 // }
 package com.example.demo.controller;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.List;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,17 +52,24 @@ public class MessageController {
     }
 
     @PostMapping("/send")
-    public ResponseEntity<?> sendMessage(
-            @RequestParam("sourceNode") String sourceNode,
-            @RequestParam("destinationNode") String destinationNode,
-            @RequestParam("content") String content) {
+    public ResponseEntity<?> sendMessage(@RequestBody Map<String, String> payload) {
+        String sourceNode = payload.get("sourceNode");
+        String destinationNode = payload.get("destinationNode");
+        String content = payload.get("content");
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
 
-        Message message = messageService.sendMessage(sourceNode, destinationNode, content);
+        Message message = messageService.sendMessage(sourceNode, destinationNode, content, userId);
 
         Map<String, Object> response = new HashMap<>();
         response.put("success", true);
         response.put("data", message);
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<List<Message>> listMessages() {
+        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(messageService.listMessages(userId));
     }
 }

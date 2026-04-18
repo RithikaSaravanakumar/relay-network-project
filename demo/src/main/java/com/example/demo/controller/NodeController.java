@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,9 +37,10 @@ public class NodeController {
     public ResponseEntity<?> registerNode() {
         try {
             log.info("Received node registration request");
+            String userId = SecurityContextHolder.getContext().getAuthentication().getName();
 
             // Register the node (generates keys and saves to DB)
-            Node registeredNode = nodeService.registerNode();
+            Node registeredNode = nodeService.registerNode(userId);
 
             // Prepare response
             Map<String, Object> response = new HashMap<>();
@@ -110,6 +112,30 @@ public class NodeController {
         response.put("status", "healthy");
         response.put("service", "Relay Node Service");
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get all registered nodes
+     *
+     * @return ResponseEntity containing a list of all nodes
+     */
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllNodes() {
+        try {
+            String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+            log.info("Retrieving all registered nodes for user: {}", userId);
+            java.util.List<Node> nodes = nodeService.getAllNodes(userId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("data", nodes);
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Failed to retrieve nodes", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Failed to retrieve nodes: " + e.getMessage()));
+        }
     }
 
     /**

@@ -34,8 +34,17 @@ public class Message {
     // 🔥 SIMULATION FIELDS
     private double congestionLevel;
     private double packetLossRate;
+    private String userId;
 
     public Message(){}
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
 
     public String getMessageId() { return messageId; }
     public void setMessageId(String messageId) { this.messageId = messageId; }

@@ -490,11 +490,14 @@ export default function MessageSender() {
       }
 
     } catch (e) {
-
-      setResult({
-        success: false,
-        message: e.response?.data?.message || 'Failed to send'
-      });
+      console.error("FULL ERROR:", e);
+      console.error("BACKEND ERROR:", e.response?.data);
+      const backendMsg = e.response?.data?.message
+        || e.response?.data?.error
+        || (typeof e.response?.data === 'string' ? e.response.data : null)
+        || e.message
+        || 'Failed to send';
+      setResult({ success: false, message: backendMsg });
 
     } finally {
       setLoading(false);
